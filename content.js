@@ -59,7 +59,9 @@ function updateSelected(direction) {
 
   // style
   results[index].style.setProperty("background-color", "#282828");
-  results[index].querySelector("span > a").focus();
+  const link = results[index];
+  link.style.caretColor = "transparent";
+  link.querySelector("span > a").focus();
 
   // scroll
   if (direction === "first") window.scrollTo(0, 0);
