@@ -1,7 +1,10 @@
-// FIX: result "ee" breaks for selecting twitter; try filtering by class?
+// FIX: there was a case where the entire search result wasn't selected (extra parent?)
+// can't seem to replicate for now
+//  * may be fixed now
 // TODO: don't scroll on load
 // TODO: allow for custom bindings/settings?
 // if so, then have the scrolling on selection change be an option
+// option to not skip "videos" section of all?
 
 const resultsContainer = document.querySelector("#search #rso");
 const searchFormRect = document
@@ -22,11 +25,15 @@ const results = resultsContainer
         const parent = h3.parentElement.closest("[data-hveid]");
         return parent && !parent.closest(IGNORE);
       })
-      .map(
-        (h3) =>
-          h3.parentElement.parentElement.parentElement.parentElement
-            .parentElement.parentElement,
-      )
+      // pretty hacky
+      .map((element) => {
+        while (
+          element.parentElement.parentElement.parentElement.parentElement.id !==
+          "rso"
+        )
+          element = element.parentElement;
+        return element;
+      })
   : [];
 
 function checkSection() {
