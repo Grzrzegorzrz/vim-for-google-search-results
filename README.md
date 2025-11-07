@@ -1,4 +1,4 @@
-# Google Vim Motions
+# Vim for Google Search Results
 
 Vim motions for Google search results.
 
