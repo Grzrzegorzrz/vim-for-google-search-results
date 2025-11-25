@@ -5,7 +5,6 @@
 // option to change selection color
 
 // preferences
-const defaultDark = "#232326";
 const defaultLight = "#F5F5F5";
 const defaultColor = undefined;
 
@@ -40,15 +39,22 @@ const results = resultsContainer
 let prevKeyG = false;
 let index = 0;
 
-// HACK: approx theme via document.body background color or OS color scheme
 function themeColor() {
-  if (getComputedStyle(document.body).backgroundColor === "rgb(255, 255, 255)")
-    return defaultLight;
-  else
-    return window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? defaultDark
-      : defaultLight;
+  const bgColor = getComputedStyle(document.body).backgroundColor;
+  if (bgColor === "rgb(255, 255, 255)") return defaultLight;
+
+  const currRGB = bgColor.match(/\d+/g);
+
+  // rough interpretation of if light mode or dark mode
+  const increment = parseInt(currRGB[0]) < 230 ? 10 : -10;
+
+  // Convert strings to numbers and increment each by 10
+  const newRGB = currRGB.map((num) => {
+    let val = parseInt(num) + increment;
+    return val > 255 ? 255 : val; // clamp at 255
+  });
+
+  return `rgb(${newRGB[0]}, ${newRGB[1]}, ${newRGB[2]})`;
 }
 
 function checkSection() {
