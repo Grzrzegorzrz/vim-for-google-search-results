@@ -4,6 +4,11 @@
 // option to not skip "videos" section of all?
 // option to change selection color
 
+// preferences
+const defaultDark = "#232326";
+const defaultLight = "#F5F5F5";
+const defaultColor = undefined;
+
 const resultsContainer = document.querySelector("#search #rso");
 const searchFormRect = document
   .querySelector("#searchform")
@@ -12,23 +17,9 @@ const section = document.querySelectorAll('[aria-current="page"]');
 
 const IGNORE = ".related-question-pair, .kp-blk, .g-blk, .xpdopen, .xpd";
 const topOffset = searchFormRect.bottom - searchFormRect.top; // height of top bar
-const defaultDark = "#232326";
-const defaultLight = "#F5F5F5";
+const selectColor = defaultColor ? defaultColor : themeColor();
 
-// HACK: find Google Search background color
-let selectColor;
-const bgColor = getComputedStyle(document.body).backgroundColor;
-if (bgColor === "rgb(255, 255, 255)") selectColor = defaultLight;
-else
-  selectColor =
-    window.matchMedia &&
-    window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? defaultDark
-      : defaultLight;
-
-let prevKeyG = false;
-let index = 0;
-
+// array of all results
 const results = resultsContainer
   ? [...resultsContainer.querySelectorAll("a > h3")]
       .filter((h3) => {
@@ -36,16 +27,29 @@ const results = resultsContainer
         const parent = h3.parentElement.closest("[data-hveid]");
         return parent && !parent.closest(IGNORE);
       })
-      // pretty hacky
       .map((element) => {
         while (
-          element.parentElement.parentElement.parentElement.parentElement.id !==
-          "rso"
+          !element.parentElement.hasAttribute("data-rpos") &&
+          !element.parentElement.hasAttribute("data-hveid")
         )
           element = element.parentElement;
         return element;
       })
   : [];
+
+let prevKeyG = false;
+let index = 0;
+
+// HACK: approx theme via document.body background color or OS color scheme
+function themeColor() {
+  if (getComputedStyle(document.body).backgroundColor === "rgb(255, 255, 255)")
+    return defaultLight;
+  else
+    return window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? defaultDark
+      : defaultLight;
+}
 
 function checkSection() {
   const html = section[0]?.innerHTML ?? "";
@@ -75,28 +79,27 @@ function updateSelected(direction) {
       break;
   }
 
+  const selected = results[index];
+  const selectedTop = selected.getBoundingClientRect().top;
+
   // style
-  results[index].style.setProperty("background-color", selectColor);
-  const link = results[index];
-  link.style.caretColor = "transparent";
-  link.querySelector("span > a").focus();
+  selected.style.setProperty("background-color", selectColor);
+  selected.style.caretColor = "transparent";
+  selected.querySelector("span > a").focus();
 
   // scroll
   if (direction === "first") window.scrollTo(0, 0);
   else if (direction === "last") window.scrollTo(0, document.body.scrollHeight);
-  else if (index === 0 || index === bottom)
-    results[index].scrollIntoView({ behavior: "auto", block: "center" });
-  else results[index].scrollIntoView({ behavior: "auto", block: "nearest" });
+  else
+    selected.scrollIntoView({
+      behavior: "auto",
+      block: index === 0 || index === bottom ? "center" : "nearest",
+    });
 
   // move view up by amount the selected is blocked by the top bar
-  const selectedTop = results[index].getBoundingClientRect().top;
   if (selectedTop < topOffset && direction !== "first")
     window.scrollBy(0, selectedTop - topOffset);
 }
-
-// init
-updateSelected("first");
-window.scrollTo(0, 0); // hacky workaround to make the window load at the top of the page
 
 addEventListener("keydown", (e) => {
   const active = document.activeElement;
@@ -149,3 +152,7 @@ addEventListener("keydown", (e) => {
       break;
   }
 });
+
+// init
+updateSelected("first");
+window.scrollTo(0, 0); // make the window load at the top of the page
