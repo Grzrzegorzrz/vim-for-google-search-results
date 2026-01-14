@@ -6,18 +6,21 @@
 
 // -- preferences --
 const defaultColor = undefined;
+
 // scroll behavior
 const gScroll = "smooth";
 const jkScroll = "instant";
 const resultScroll = "nearest";
-// selected result styling
-const selectExtrude = "10px";
-const selectRounding = "5px";
+const showNext = true; // show search result above/below curr selection
+
+// selected result styling (in px)
+const selectExtrude = "10";
+const selectRounding = "5";
 
 // strat for handling custom key sequences:
-// - simple string match; clear string on command input or delay
-//   - maybe match from end?
-// - vim way: pause if ambigious, then proceed if no response?
+// - vim way:
+//   - traverse trie
+//   - store trie in json
 
 const resultsContainer = document.querySelector("#search #rso");
 const searchFormRect = document
@@ -96,15 +99,21 @@ function updateSelected(direction) {
       break;
   }
 
-  const selected = results[index];
+  let selected = results[index];
   const selectedTop = selected.getBoundingClientRect().top;
 
   // style
   selected.style.backgroundColor = selectColor;
-  selected.style.boxShadow = `0 0 0 ${selectExtrude} ${selectColor}`;
-  selected.style.borderRadius = selectRounding;
+  selected.style.boxShadow = `-4px 0 0 ${selectExtrude}px ${selectColor}`;
+  selected.style.borderRadius = selectRounding + "px";
   selected.style.caretColor = "transparent";
   selected.querySelector("span > a").focus({ preventScroll: true });
+
+  // extra space for on scroll
+  if (showNext) {
+    if (direction === "down" && index != bottom) selected = results[index + 1];
+    else if (direction === "up" && index != 0) selected = results[index - 1];
+  }
 
   // scroll
   if (direction === "first")
@@ -117,11 +126,12 @@ function updateSelected(direction) {
       behavior: gScroll,
       top: document.body.scrollHeight,
     });
-  else
+  else {
     selected.scrollIntoView({
       behavior: jkScroll,
       block: index === 0 || index === bottom ? "center" : resultScroll,
     });
+  }
 
   // move view up by amount the selected is blocked by the top bar
   if (selectedTop < topOffset && direction !== "first")

@@ -1,6 +1,6 @@
 {
   "name": "Vim for Google Search Results",
-  "version": "1.4",
+  "version": "1.5",
   "manifest_version": 3,
 
   "description": "Move between Google search results using Vim motions",
