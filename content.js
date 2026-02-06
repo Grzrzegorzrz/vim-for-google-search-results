@@ -6,13 +6,11 @@
 
 // -- preferences --
 const defaultColor = undefined;
-
 // scroll behavior
 const gScroll = "smooth";
 const jkScroll = "instant";
 const resultScroll = "nearest";
 const showNext = true; // show search result above/below curr selection
-
 // selected result styling (in px)
 const selectExtrude = "10";
 const selectRounding = "5";
@@ -58,7 +56,7 @@ function themeColor() {
 
   const currRGB = bgColor.match(/\d+/g);
   // interpret if light mode or dark mode
-  const increment = parseInt(currRGB[0]) < 230 ? 10 : -10;
+  const increment = parseInt(currRGB[0]) < 230 ? 15 : -15;
 
   // Convert strings to numbers and increment each by 10
   const newRGB = currRGB.map((num) => {
@@ -99,8 +97,10 @@ function updateSelected(direction) {
       break;
   }
 
-  let selected = results[index];
+  const selected = results[index];
   const selectedTop = selected.getBoundingClientRect().top;
+  const selectedBot = selected.getBoundingClientRect().bottom;
+  const marginPx = (selectedBot - selectedTop) * 0.5;
 
   // style
   selected.style.backgroundColor = selectColor;
@@ -108,12 +108,6 @@ function updateSelected(direction) {
   selected.style.borderRadius = selectRounding + "px";
   selected.style.caretColor = "transparent";
   selected.querySelector("span > a").focus({ preventScroll: true });
-
-  // extra space for on scroll
-  if (showNext) {
-    if (direction === "down" && index != bottom) selected = results[index + 1];
-    else if (direction === "up" && index != 0) selected = results[index - 1];
-  }
 
   // scroll
   if (direction === "first")
@@ -126,18 +120,23 @@ function updateSelected(direction) {
       behavior: gScroll,
       top: document.body.scrollHeight,
     });
-  else {
+  else
     selected.scrollIntoView({
       behavior: jkScroll,
       block: index === 0 || index === bottom ? "center" : resultScroll,
     });
-  }
 
   // move view up by amount the selected is blocked by the top bar
-  if (selectedTop < topOffset && direction !== "first")
+  if (selectedTop < topOffset + marginPx && direction !== "first")
     window.scrollBy({
       behavior: jkScroll,
-      top: selectedTop - topOffset,
+      top: selectedTop - topOffset - marginPx,
+    });
+
+  if (selectedBot > window.innerHeight - marginPx && direction === "down")
+    window.scrollBy({
+      behavior: jkScroll,
+      top: marginPx,
     });
 }
 
